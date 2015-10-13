@@ -1,7 +1,5 @@
 
 var gulp = require('gulp');
-var src  = gulp.src;
-var dest = gulp.dest;
 var path = require('path');
 var through2   = require("through2");
 var $ = require('gulp-load-plugins')();
@@ -9,6 +7,8 @@ var $ = require('gulp-load-plugins')();
 var src  = gulp.src;
 var dest = gulp.dest;
 var j = path.join;
+
+var importOnce = require('node-sass-import-once');
 
 
 var styles = function(buildContext) {
@@ -33,6 +33,12 @@ var styles = function(buildContext) {
     }))
 
     .pipe($.sass({
+      importer: importOnce,
+      importOnce: {
+        index: false,
+        css: false,
+        bower: false
+      },
       sync: false,
       precision: 10,
       onError: console.error.bind(console, 'Sass error:')
@@ -54,6 +60,7 @@ var styles = function(buildContext) {
 
   return stream;  
 }
+
 
 module.exports = styles;
 

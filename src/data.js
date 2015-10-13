@@ -11,33 +11,24 @@ var j = path.join;
 var mergeStream = require('merge-stream');
 
 
-var imagemin = $.cache($.imagemin({
-  progressive: true,
-  interlaced: true
-}), {
-  key: function(file) {
-    if (file.isBuffer())
-      return [file.path, file.contents.toString('base64')].join('');
-    return undefined;
-  }
-});
 
-
-function imagesFromSources(buildContext, sources) {
+function dataFromSources(buildContext, sources) {
 
   var stream = mergeStream();
   sources.forEach(function(item) {
     stream.add(src(item));
   })
          
-  stream = stream.pipe(imagemin);
+  if (!buildContext.dev && buildContext.optimize) {
+    stream = stream.pipe(jsonminify());
+  }
     
   if (!buildContext.dev) {
     stream = stream.pipe($.rev());
   }
     
-  // write images
-  stream = stream.pipe(dest(j(buildContext.destPath, 'images')));
+  // write files
+  stream = stream.pipe(dest(j(buildContext.destPath, 'data')));
 
   // if (!buildContext.dev) {
   //   stream = stream
@@ -54,23 +45,29 @@ function imagesFromSources(buildContext, sources) {
 function getSources(paths) {
   var srcs = [];
   paths.forEach(function(item) {
-      srcs.push(j(item, 'src', 'images', '**', '*.{png,jpg,svg,gif}'));
-      srcs.push(j(item, 'temp', 'generated-images', '**', '*.{png,jpg,svg,gif}'));
+  	  // verbatim-data corresponds to data that is used as a static web asset
+  	  // without any preprocessing
+      srcs.push(j(item, 'data', 'verbatim-data-assets', '*.json'));
+      
+      // prepared data is created by preprocessing scripts
+      srcs.push(j(item, 'temp', 'data-assets', '*.json'));
+
+      //srcs.push(j(item, 'temp', 'data-assets', '**', '*.{json}'));
   });
 
   return srcs;
 }
 
 
-function images(buildContext, paths) {
+function data(buildContext, paths) {
   var merged = mergeStream();
   if (!paths) {
     paths = [];
   }
   paths.push('');
 
-  return imagesFromSources(buildContext, getSources(paths));
+  return dataFromSources(buildContext, getSources(paths));
 }
 
 
-module.exports = images;
+module.exports = data;
