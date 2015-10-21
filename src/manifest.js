@@ -10,6 +10,7 @@ var fs = require('fs');
 var manifest = function(buildContext, cb) {
 
 	if (buildContext.dev) {
+		cb();
 		return;
 	}
 
