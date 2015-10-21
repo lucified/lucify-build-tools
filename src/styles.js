@@ -49,7 +49,8 @@ var styles = function(buildContext) {
       extension: '.scss'
     }))
 
-    .pipe(insert.prepend(getVariablesInsert(buildContext.assetManifest, buildContext.assetPath)))
+    .pipe(insert.prepend(getVariablesInsert(buildContext.assetManifest, 
+      buildContext.dev ? "" : buildContext.assetPath)))
 
     //.pipe(dest('temp/scss'))
 

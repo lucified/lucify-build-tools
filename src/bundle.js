@@ -17,6 +17,7 @@ var gulp = require('gulp');
 var src  = gulp.src;
 var dest = gulp.dest;
 
+var rename = require('gulp-rename');
 
 
 /**
@@ -42,7 +43,7 @@ function bundle(entryPoint, buildContext, opts) {
   	opts.destPath = buildContext.destPath;
   }
 
-  if (!opts.rev) {
+  if (opts.rev !== false) {
     opts.rev = true;
   }
 
@@ -74,10 +75,14 @@ var doBundle = function(bundler, buildContext, opts) {
 
     var ap = !buildContext.assetPath ? null : buildContext.assetPath;
 
-    var assets = sprintf(
-      "window.lucifyAssetManifest = %s;\n window.lucifyAssetPath = %s;\n",
-      JSON.stringify(buildContext.assetManifest), 
-      JSON.stringify(ap));
+    var assets = "";
+    
+    if (!buildContext.dev) {
+      assets = sprintf(
+        "window.lucifyAssetManifest = %s;\n window.lucifyAssetPath = %s;\n",
+        JSON.stringify(buildContext.assetManifest), 
+        JSON.stringify(ap));
+    }
 
     var combined = CombinedStream.create();  
 	    combined.append(through().pause().queue(assets).end());

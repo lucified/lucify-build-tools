@@ -33,7 +33,11 @@ BuildContext.prototype.initHandleBars = function() {
 
 	hbs.registerHelper("assetPath", function(key) {
 	  var paths = this.assetManifest;
-	  return new hbs.SafeString(this.assetPath + (paths[key] || key));
+	  if (!this.dev) {
+	  	return new hbs.SafeString(this.assetPath + (paths[key] || key)); 
+	  } else {
+	  	return new hbs.SafeString(paths[key] || key); 
+	  }
 	}.bind(this));
 
 	hbs.renderSync = function renderSync(str, context) {

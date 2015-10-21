@@ -97,10 +97,12 @@ function publishEntryPoints(bucket, sourceFolder, targetFolder) {
 var hashedStream;
 function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {  
 
-  if (!maxAge) {
+  if (!isFinite(maxAge)) {
     maxAge = 3600;
   }
 
+  console.log("Using max-age " + maxAge);
+  
   if (!sourceFolder) {
     sourceFolder = 'dist';
   }
