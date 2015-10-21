@@ -39,14 +39,10 @@ function imagesFromSources(buildContext, sources) {
   // write images
   stream = stream.pipe(dest(j(buildContext.destPath, 'images')));
 
-  // if (!buildContext.dev) {
-  //   stream = stream
-  //     .pipe(collectManifest())
-  //     .pipe(through2.obj(function(manifest, enc, cb) {
-  //       _.merge(assetManifest, manifest)
-  //       cb(null, manifest);
-  //     }));
-  // }
+  if (!buildContext.dev) {
+     stream = stream.pipe(buildContext.collectManifest());
+  }  
+
   return stream;
 }
 

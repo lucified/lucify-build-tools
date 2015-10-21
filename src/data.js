@@ -13,7 +13,6 @@ var mergeStream = require('merge-stream');
 
 
 function dataFromSources(buildContext, sources) {
-
   var stream = mergeStream();
   sources.forEach(function(item) {
     stream.add(src(item));
@@ -29,15 +28,11 @@ function dataFromSources(buildContext, sources) {
     
   // write files
   stream = stream.pipe(dest(j(buildContext.destPath, 'data')));
+  
+  if (!buildContext.dev) {
+     stream = stream.pipe(buildContext.collectManifest());
+  }  
 
-  // if (!buildContext.dev) {
-  //   stream = stream
-  //     .pipe(collectManifest())
-  //     .pipe(through2.obj(function(manifest, enc, cb) {
-  //       _.merge(assetManifest, manifest)
-  //       cb(null, manifest);
-  //     }));
-  // }
   return stream;
 }
 

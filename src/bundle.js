@@ -9,6 +9,7 @@ var buffer     = require('vinyl-buffer')
 var gulpif = require('gulp-if');
 var $ = require('gulp-load-plugins')();
 var hbs = require('handlebars');
+var sprintf = require('sprintf');
 
 var handleErrors = require('./handle-errors.js');
 
@@ -71,8 +72,12 @@ function bundle(entryPoint, buildContext, opts) {
 
 var doBundle = function(bundler, buildContext, opts) {
 
-    var assets = "window.lucifyAssetManifest = " 
-      + JSON.stringify(buildContext.assetManifest) + ";";
+    var ap = !buildContext.assetPath ? null : buildContext.assetPath;
+
+    var assets = sprintf(
+      "window.lucifyAssetManifest = %s;\n window.lucifyAssetPath = %s;\n",
+      JSON.stringify(buildContext.assetManifest), 
+      JSON.stringify(ap));
 
     var combined = CombinedStream.create();  
 	    combined.append(through().pause().queue(assets).end());
@@ -92,9 +97,9 @@ var doBundle = function(bundler, buildContext, opts) {
     stream = stream.pipe(dest(opts.destPath));
 
     if (!buildContext.dev) {
-    	stream.pipe(buildContext.collectManifest());
-    }
-
+    	stream = stream.pipe(buildContext.collectManifest());
+    } 
+  
     return stream; 
 }
 

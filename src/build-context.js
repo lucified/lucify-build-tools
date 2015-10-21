@@ -9,30 +9,31 @@ var BuildContext = function(dev, uglify, optimize, destPath) {
 	this.initHandleBars();
 	this.uglify = uglify;
 	this.optimize = optimize;
+	this.assetPath = "";
 
 	if (!destPath) {
 		this.destPath = this.dev ? 'build' : 'dist';
 	} else {
 		this.destPath = destPath;
 	}
-
-	console.log("destPath is" + this.destPath);
 }
 
 
+
 BuildContext.prototype.initHandleBars = function() {
-	hbs.registerHelper("assetFilesScss", function(revved) {
-	  var paths = this.assetManifest;
-	  var a = Object.keys(paths).map(function(k) {
-	    var v = revved ? paths[k] : k;
-	    return "'" + v + "'";
-	  })
-	  return new hbs.SafeString(a.join(", "));
-	}.bind(this));
+	
+	// hbs.registerHelper("assetFilesScss", function(revved) {
+	//   var paths = this.assetManifest;
+	//   var a = Object.keys(paths).map(function(k) {
+	//     var v = revved ? paths[k] : k;
+	//     return "'" + v + "'";
+	//   })
+	//   return new hbs.SafeString(a.join(", "));
+	// }.bind(this));
 
 	hbs.registerHelper("assetPath", function(key) {
 	  var paths = this.assetManifest;
-	  return new hbs.SafeString(paths[key] || key);
+	  return new hbs.SafeString(this.assetPath + (paths[key] || key));
 	}.bind(this));
 
 	hbs.renderSync = function renderSync(str, context) {
@@ -44,14 +45,12 @@ BuildContext.prototype.initHandleBars = function() {
 	    return err;
 	  }
 	};
-
 	this.hbs = hbs;
 }
 
 
 BuildContext.prototype.collectManifest = function() {
   var firstFile = null;
-  
   return through2.obj(function(file, enc, cb) {
     // ignore all non-rev'd files
     if (!file.path) {
@@ -61,14 +60,32 @@ BuildContext.prototype.collectManifest = function() {
 
     firstFile = firstFile || file;
 
+    var path = relPath(firstFile.base, file.path);
+
     if (!file.revOrigPath) {
-      this.assetManifest[relPath(firstFile.base, file.path)] = relPath(firstFile.base, file.path);
+      this.assetManifest[relPath(firstFile.base, file.path)] = path;
+      	
     } else {
-      this.assetManifest[relPath(file.revOrigBase, file.revOrigPath)] = relPath(firstFile.base, file.path);
+      this.assetManifest[relPath(file.revOrigBase, file.revOrigPath)] = path;
+      	
     }
 
     cb();
   }.bind(this));
+}
+
+
+function relPath(base, filePath) {
+  if (filePath.indexOf(base) !== 0) {
+    return filePath.replace(/\\/g, '/');
+  }
+  var newPath = filePath.substr(base.length).replace(/\\/g, '/');
+
+  if (newPath[0] === '/') {
+    return newPath.substr(1);
+  }
+
+  return newPath;
 }
 
 

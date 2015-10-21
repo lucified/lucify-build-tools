@@ -3,12 +3,42 @@ var gulp = require('gulp');
 var path = require('path');
 var through2   = require("through2");
 var $ = require('gulp-load-plugins')();
+var insert = require('gulp-insert');
+var sprintf = require('sprintf');
+var _ = require('underscore');
 
 var src  = gulp.src;
 var dest = gulp.dest;
 var j = path.join;
 
 var importOnce = require('node-sass-import-once');
+
+
+
+var getVariablesInsert = function(manifest, assetPath) {
+
+  var keys = _.keys(manifest);
+  var values = keys.map(function(key) {
+    return manifest[key];
+  });
+
+
+  var addHyphens = function(arr) {
+    return arr.map(function(item) {
+      return "'" + item + "'";
+    })
+  }
+
+  var keysString = "";
+
+  //if (keys.length > 0) {
+    return sprintf("\n\n\n$asset-files: %s;\n$asset-files-rev: %s;\n$asset-path: '%s';\n\n", 
+      addHyphens(keys).join(','), 
+      addHyphens(values).join(','),
+      assetPath);  
+  //}
+  return "";
+};
 
 
 var styles = function(buildContext) {
@@ -19,18 +49,9 @@ var styles = function(buildContext) {
       extension: '.scss'
     }))
 
-    // render sass files first through handlebars
-    .pipe(through2.obj(function(file, enc, _cb) {
-      var rendered = buildContext.hbs.renderSync(file.contents.toString())
+    .pipe(insert.prepend(getVariablesInsert(buildContext.assetManifest, buildContext.assetPath)))
 
-      // replaces imagepaths, for example
-      file.contents = new Buffer(rendered) 
-      file.path = file.path.replace(/\.scss$/,'.css')
-      
-      // push to the outer stream
-      this.push(file) 
-      _cb();
-    }))
+    //.pipe(dest('temp/scss'))
 
     .pipe($.sass({
       importer: importOnce,
@@ -47,7 +68,7 @@ var styles = function(buildContext) {
   if (!buildContext.dev) {
     stream = stream
       //.pipe($.autoprefixer())
-      .pipe($.csso())
+      //.pipe($.csso())
       .pipe($.rev())
   }
 
