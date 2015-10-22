@@ -1,13 +1,17 @@
 {
   "name": "lucify-build-tools",
   "version": "0.1.0",
-  "description": "",
+  "description": "Tools for building Lucify projects",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/lucify/lucify-build-tools.git"
+  },
   "dependencies": {
     "babelify": "^6.3.0",
     "browser-sync": "^2.9.7",

@@ -17,8 +17,6 @@ var gulp = require('gulp');
 var src  = gulp.src;
 var dest = gulp.dest;
 
-var rename = require('gulp-rename');
-
 
 /**
  * Create a browserify bundle according
