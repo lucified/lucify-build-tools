@@ -31,6 +31,8 @@ BuildContext.prototype.initHandleBars = function() {
 	//   return new hbs.SafeString(a.join(", "));
 	// }.bind(this));
 
+
+
 	hbs.registerHelper("assetPath", function(key) {
 	  var paths = this.assetManifest;
 	  if (!this.dev) {
@@ -46,7 +48,7 @@ BuildContext.prototype.initHandleBars = function() {
 	    var fn = (typeof str === 'function' ? str : hbs.compile(str, context));
 	    return fn(context);
 	  } catch (err) {
-	    return err;
+	  	throw err;
 	  }
 	};
 	this.hbs = hbs;
