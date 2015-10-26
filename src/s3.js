@@ -8,7 +8,8 @@ var rimraf = require('rimraf');
 var sprintf = require('sprintf');
 
 
-var options = parseArgs(process.argv, {default: {force: false}});
+var options = parseArgs(process.argv, {default: {
+    force: false, bucket: null}});
 
 
 /*
@@ -28,6 +29,11 @@ function publishToS3(src, headers, folder, bucket) {
   // Config object is passed to 
   // new AWS.S3() as documented here:
   //   http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
+  
+  if (options.bucket != null) {
+      bucket = options.bucket;
+  }
+
   var publisher = createPublisher(bucket);
 
   var publishStream = function(stream, headers) {    
