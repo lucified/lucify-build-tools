@@ -1,15 +1,23 @@
 
 var gulp = require('gulp');
+var parseArgs = require('minimist');
+
+var options = parseArgs(process.argv, {default: {
+    force: false, bucket: null, profile: null}});
+
+if (options.profile != null) {
+    console.log("Using AWS profile " + options.profile);
+    process.env['AWS_DEFAULT_PROFILE'] = options.profile;
+}
+
 var awspublish = require('gulp-awspublish');
 var mergeStream = require('merge-stream');
-var parseArgs = require('minimist');
 var rename = require('gulp-rename');
 var rimraf = require('rimraf');
 var sprintf = require('sprintf');
 
 
-var options = parseArgs(process.argv, {default: {
-    force: false, bucket: null}});
+
 
 
 /*
@@ -33,6 +41,8 @@ function publishToS3(src, headers, folder, bucket) {
   if (options.bucket != null) {
       bucket = options.bucket;
   }
+
+
 
   var publisher = createPublisher(bucket);
 
