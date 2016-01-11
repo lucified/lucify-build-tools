@@ -9,5 +9,4 @@ module.exports = {
 	serve: require('./src/serve-browser-sync.js'),
 	serveProd: require('./src/serve-prod.js'),
 	manifest: require('./src/manifest.js')
-}
-
+};

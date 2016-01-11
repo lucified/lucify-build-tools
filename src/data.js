@@ -16,22 +16,22 @@ function dataFromSources(buildContext, sources) {
   var stream = mergeStream();
   sources.forEach(function(item) {
     stream.add(src(item));
-  })
-         
+  });
+
   if (!buildContext.dev && buildContext.optimize) {
     stream = stream.pipe(jsonminify());
   }
-    
+
   if (!buildContext.dev) {
     stream = stream.pipe($.rev());
   }
-    
+
   // write files
   stream = stream.pipe(dest(j(buildContext.destPath, 'data')));
-  
+
   if (!buildContext.dev) {
      stream = stream.pipe(buildContext.collectManifest());
-  }  
+  }
 
   return stream;
 }
@@ -43,11 +43,9 @@ function getSources(paths) {
   	  // verbatim-data corresponds to data that is used as a static web asset
   	  // without any preprocessing
       srcs.push(j(item, 'data', 'verbatim-data-assets', '*.json'));
-      
+
       // prepared data is created by preprocessing scripts
       srcs.push(j(item, 'temp', 'data-assets', '*.json'));
-
-      //srcs.push(j(item, 'temp', 'data-assets', '**', '*.{json}'));
   });
 
   return srcs;

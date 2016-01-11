@@ -4,7 +4,7 @@ var _ = require('underscore');
 var fs = require('fs');
 
 /*
- * Create temporary asset manifest 
+ * Create temporary asset manifest
  * in the temp directory
  */
 var manifest = function(buildContext, cb) {
@@ -22,7 +22,7 @@ var manifest = function(buildContext, cb) {
 	fs.writeFileSync('temp/asset-manifest.json', JSON.stringify(buildContext.assetManifest, null, 3));
 
 	cb();
-} 
+};
 
 
 module.exports = manifest;

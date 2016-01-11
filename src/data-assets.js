@@ -16,7 +16,7 @@ function dataAssets(buildContext) {
 
   if (!buildContext.dev) {
     stream = stream
-      .pipe(buildContext.collectManifest())
+      .pipe(buildContext.collectManifest());
   }
 
   return stream;

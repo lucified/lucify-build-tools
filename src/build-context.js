@@ -16,29 +16,17 @@ var BuildContext = function(dev, uglify, optimize, destPath) {
 	} else {
 		this.destPath = destPath;
 	}
-}
-
+};
 
 
 BuildContext.prototype.initHandleBars = function() {
-	
-	// hbs.registerHelper("assetFilesScss", function(revved) {
-	//   var paths = this.assetManifest;
-	//   var a = Object.keys(paths).map(function(k) {
-	//     var v = revved ? paths[k] : k;
-	//     return "'" + v + "'";
-	//   })
-	//   return new hbs.SafeString(a.join(", "));
-	// }.bind(this));
-
-
 
 	hbs.registerHelper("assetPath", function(key) {
 	  var paths = this.assetManifest;
 	  if (!this.dev) {
-	  	return new hbs.SafeString(this.assetPath + (paths[key] || key)); 
+	  	return new hbs.SafeString(this.assetPath + (paths[key] || key));
 	  } else {
-	  	return new hbs.SafeString(paths[key] || key); 
+	  	return new hbs.SafeString(paths[key] || key);
 	  }
 	}.bind(this));
 
@@ -51,8 +39,9 @@ BuildContext.prototype.initHandleBars = function() {
 	  	throw err;
 	  }
 	};
+
 	this.hbs = hbs;
-}
+};
 
 
 BuildContext.prototype.collectManifest = function() {
@@ -70,15 +59,15 @@ BuildContext.prototype.collectManifest = function() {
 
     if (!file.revOrigPath) {
       this.assetManifest[relPath(firstFile.base, file.path)] = path;
-      	
+
     } else {
       this.assetManifest[relPath(file.revOrigBase, file.revOrigPath)] = path;
-      	
+
     }
 
     cb();
   }.bind(this));
-}
+};
 
 
 function relPath(base, filePath) {
