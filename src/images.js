@@ -28,20 +28,20 @@ function imagesFromSources(buildContext, sources) {
   var stream = mergeStream();
   sources.forEach(function(item) {
     stream.add(src(item));
-  })
-         
+  });
+
   stream = stream.pipe(imagemin);
-    
+
   if (!buildContext.dev) {
     stream = stream.pipe($.rev());
   }
-    
+
   // write images
   stream = stream.pipe(dest(j(buildContext.destPath, 'images')));
 
   if (!buildContext.dev) {
      stream = stream.pipe(buildContext.collectManifest());
-  }  
+  }
 
   return stream;
 }

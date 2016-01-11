@@ -4,8 +4,8 @@ var watchify = require('watchify');
 var through = require("through");
 var babelify = require('babelify');
 var CombinedStream = require('combined-stream');
-var source = require('vinyl-source-stream')
-var buffer     = require('vinyl-buffer')
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
 var gulpif = require('gulp-if');
 var $ = require('gulp-load-plugins')();
 var hbs = require('handlebars');
@@ -28,7 +28,7 @@ var dest = gulp.dest;
  *  opts.destPath       - destinatino path for produced bundle
  */
 function bundle(entryPoint, buildContext, opts) {
-  
+
   if (!opts) {
     opts = {};
   }
@@ -74,15 +74,15 @@ var doBundle = function(bundler, buildContext, opts) {
     var ap = !buildContext.assetPath ? null : buildContext.assetPath;
 
     var assets = "";
-    
+
     if (!buildContext.dev) {
       assets = sprintf(
         "window.lucifyAssetManifest = %s;\n window.lucifyAssetPath = %s;\n",
-        JSON.stringify(buildContext.assetManifest), 
+        JSON.stringify(buildContext.assetManifest),
         JSON.stringify(ap));
     }
 
-    var combined = CombinedStream.create();  
+    var combined = CombinedStream.create();
 	    combined.append(through().pause().queue(assets).end());
 	    combined.append(bundler.bundle().on('error', handleErrors));
 
@@ -101,10 +101,10 @@ var doBundle = function(bundler, buildContext, opts) {
 
     if (!buildContext.dev) {
     	stream = stream.pipe(buildContext.collectManifest());
-    } 
-  
-    return stream; 
-}
+    }
+
+    return stream;
+};
 
 
 module.exports = bundle;

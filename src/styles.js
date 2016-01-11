@@ -26,33 +26,28 @@ var getVariablesInsert = function(manifest, assetPath) {
   var addHyphens = function(arr) {
     return arr.map(function(item) {
       return "'" + item + "'";
-    })
-  }
+    });
+  };
 
   var keysString = "";
 
-  //if (keys.length > 0) {
-    return sprintf("\n\n\n$asset-files: %s;\n$asset-files-rev: %s;\n$asset-path: '%s';\n\n", 
-      addHyphens(keys).join(','), 
-      addHyphens(values).join(','),
-      assetPath);  
-  //}
-  return "";
+  return sprintf("\n\n\n$asset-files: %s;\n$asset-files-rev: %s;\n$asset-path: '%s';\n\n",
+    addHyphens(keys).join(','),
+    addHyphens(values).join(','),
+    assetPath);
 };
 
 
 var styles = function(buildContext) {
 
-  var stream = src(j('src', 'scss', 'styles.scss')) 
- 
+  var stream = src(j('src', 'scss', 'styles.scss'))
+
     .pipe($.changed('styles', {
       extension: '.scss'
     }))
 
-    .pipe(insert.prepend(getVariablesInsert(buildContext.assetManifest, 
+    .pipe(insert.prepend(getVariablesInsert(buildContext.assetManifest,
       buildContext.dev ? "" : buildContext.assetPath)))
-
-    //.pipe(dest('temp/scss'))
 
     .pipe($.sass({
       importer: importOnce,
@@ -68,21 +63,18 @@ var styles = function(buildContext) {
 
   if (!buildContext.dev) {
     stream = stream
-      //.pipe($.autoprefixer())
-      //.pipe($.csso())
-      .pipe($.rev())
+      .pipe($.rev());
   }
 
   // write styles
-  stream = stream.pipe(dest(buildContext.destPath)); 
-    
+  stream = stream.pipe(dest(buildContext.destPath));
+
   if (!buildContext.dev) {
   	 stream = stream.pipe(buildContext.collectManifest());
-  }  
+  }
 
-  return stream;  
-}
+  return stream;
+};
 
 
 module.exports = styles;
-

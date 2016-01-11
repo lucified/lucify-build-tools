@@ -18,8 +18,6 @@ var sprintf = require('sprintf');
 
 
 
-
-
 /*
  * Publish the given source files to AWS
  * with the given headers
@@ -34,19 +32,18 @@ function publishToS3(src, headers, folder, bucket) {
      rimraf.sync('./.awspublish-*');
   }
 
-  // Config object is passed to 
+  // Config object is passed to
   // new AWS.S3() as documented here:
   //   http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
-  
+
   if (options.bucket != null) {
       bucket = options.bucket;
   }
 
 
-
   var publisher = createPublisher(bucket);
 
-  var publishStream = function(stream, headers) {    
+  var publishStream = function(stream, headers) {
     return stream
       .pipe(rename(function(path) {
         path.dirname += "";
@@ -54,7 +51,7 @@ function publishToS3(src, headers, folder, bucket) {
       .pipe(publisher.publish(headers, {force: options.force, simulate: false}))
       .pipe(publisher.cache())
       .pipe(awspublish.reporter());
-  }
+  };
 
   return publishStream(gulp.src(src), headers);
 }
@@ -75,7 +72,7 @@ function createPublisher(bucket) {
     params: {
       'Bucket': bucket
     }
-  }
+  };
   var publisher = awspublish.create(config);
   return publisher;
 }
@@ -87,7 +84,7 @@ function createPublisher(bucket) {
  */
 var epStream;
 function publishEntryPoints(bucket, sourceFolder, targetFolder) {
-  
+
   if (!sourceFolder) {
     sourceFolder = 'dist';
   }
@@ -97,28 +94,28 @@ function publishEntryPoints(bucket, sourceFolder, targetFolder) {
     publishToS3(['./' + sourceFolder + '/**/embed.js'], {}, targetFolder, bucket),
     publishToS3(['./' + sourceFolder + '/**/resize.js'], {}, targetFolder, bucket),
     publishToS3(['./' + sourceFolder + '/*.{png,ico}'], {}, targetFolder, bucket)
-  )
+  );
   return epStream;
 }
 
 
 
 /*
- * Publish all hashed assets 
+ * Publish all hashed assets
  * (assets with rev urls)
- * 
+ *
  * targetFolder -- folder to publish into
  * maxAge -- expiry age for header
  */
 var hashedStream;
-function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {  
+function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
 
   if (!isFinite(maxAge)) {
     maxAge = 3600;
   }
 
   console.log("Using max-age " + maxAge);
-  
+
   if (!sourceFolder) {
     sourceFolder = 'dist';
   }
@@ -128,7 +125,7 @@ function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
   };
   hashedStream = publishToS3([
       './' + sourceFolder + '/**',            //
-      '!./' + sourceFolder + '/**/*.html',    // note that 
+      '!./' + sourceFolder + '/**/*.html',    // note that
       '!./' + sourceFolder + '/**/embed.js',  // these
       '!./' + sourceFolder + '/**/resize.js', // are
       '!./' + sourceFolder + '/*.{png,ico}'], // exclusions
