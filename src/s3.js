@@ -82,20 +82,18 @@ function createPublisher(bucket) {
  * Publish all entry points assets
  * (assets without rev urls)
  */
-var epStream;
 function publishEntryPoints(bucket, sourceFolder, targetFolder) {
 
   if (!sourceFolder) {
     sourceFolder = 'dist';
   }
 
-  epStream = mergeStream(
+  return mergeStream(
     publishToS3(['./' + sourceFolder + '/**/*.html'], {}, targetFolder, bucket),
     publishToS3(['./' + sourceFolder + '/**/embed.js'], {}, targetFolder, bucket),
     publishToS3(['./' + sourceFolder + '/**/resize.js'], {}, targetFolder, bucket),
     publishToS3(['./' + sourceFolder + '/*.{png,ico}'], {}, targetFolder, bucket)
   );
-  return epStream;
 }
 
 
@@ -107,7 +105,6 @@ function publishEntryPoints(bucket, sourceFolder, targetFolder) {
  * targetFolder -- folder to publish into
  * maxAge -- expiry age for header
  */
-var hashedStream;
 function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
 
   if (!isFinite(maxAge)) {
@@ -123,27 +120,28 @@ function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
   var headers = {
     'Cache-Control': sprintf('max-age=%d, public', maxAge)
   };
-  hashedStream = publishToS3([
+
+  return publishToS3([
       './' + sourceFolder + '/**',            //
       '!./' + sourceFolder + '/**/*.html',    // note that
       '!./' + sourceFolder + '/**/embed.js',  // these
       '!./' + sourceFolder + '/**/resize.js', // are
       '!./' + sourceFolder + '/*.{png,ico}'], // exclusions
        headers, targetFolder, bucket);
-  return hashedStream;
 }
 
 
 /*
  * Write publisher cache to speed up uploads
  */
-function writeCache() {
-  var publisher = createPublisher();
-  return mergeStream(epStream, hashedStream)
-    .pipe(publisher.cache());
-}
+//function writeCache() {
+//  var publisher = createPublisher();
+//  console.log(epStream, hashedStream)
+//  return mergeStream(epStream, hashedStream)
+    //.pipe(publisher.cache());
+//}
 
 
 module.exports.publishHashedAssets = publishHashedAssets;
 module.exports.publishEntryPoints = publishEntryPoints;
-module.exports.writeCache = writeCache;
+//module.exports.writeCache = writeCache;
