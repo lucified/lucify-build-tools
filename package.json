@@ -3,6 +3,7 @@
   "version": "0.2.2",
   "description": "Tools for building Lucify projects",
   "main": "index.js",
+  "engines" : { "node" : ">=4.0.0" },
   "scripts": {
     "test": "mocha --reporter spec --timeout 20000"
   },
