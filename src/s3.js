@@ -77,7 +77,7 @@ function s3Init (file) {
 }
 
 /*
- * Publish all entry points assets
+ * Get file streams for all entry points assets
  * (assets without rev urls)
  */
 function entryPointStream(sourceFolder) {
@@ -92,7 +92,7 @@ function entryPointStream(sourceFolder) {
 
 
 /*
- * Publish all hashed assets
+ * Get file streams for all hashed assets
  * (assets with rev urls)
  *
  * targetFolder -- folder to publish into
