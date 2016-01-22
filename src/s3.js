@@ -1,13 +1,4 @@
 
-var parseArgs = require('minimist');
-
-var options = parseArgs(process.argv, {default: {
-    force: false, bucket: null, profile: null}});
-
-if (options.profile != null) {
-    console.log("Using AWS profile " + options.profile);
-    process.env['AWS_DEFAULT_PROFILE'] = options.profile;
-}
 
 var awspublish = require('gulp-awspublish');
 var mergeStream = require('merge-stream');
@@ -31,18 +22,6 @@ var entryPoints = [
  * with the given headers
  */
 function publishToS3(bucket, simulate, force) {
-
-  if (bucket === undefined) {
-    bucket = options.bucket;
-  }
-
-  if(force === undefined) {
-    force = options.force
-  }
-
-  if(simulate === undefined) {
-    simulate = options.simulate
-  }
 
   if (force) {
     rimraf.sync('./.awspublish-*');
@@ -151,16 +130,14 @@ module.exports = {
   entryPointStream,
   assetStream,
   publishToS3,
-  publish: (bucket, folder, maxAge, simulate, force, entry_, asset_) => {
-      var entry = entry_ || entryPointStream(folder)
-      var asset = asset_ || assetStream(folder, maxAge)
+  publish: (entry, asset, bucket, simulate, force) => {
       var output  = new require('stream').PassThrough({objectMode: true})
 
     // It is important to do deploy in series to
     // achieve an "atomic" update. uploading index.html
     // before hashed assets would be bad -- JOJ
 
-
+      //console.log('bucket', bucket, 'folder', folder, 'maxAge', maxAge, 'simulate', simulate, 'force', force, 'entry_', entry, 'asset_', asset_)
       asset.once('end', () => entry.pipe(output) )
       return asset
         .pipe(output, {end: false})
