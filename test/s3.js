@@ -62,10 +62,7 @@ describe("publish-stream", () => {
 
       }))
 
-    var entry = s3.entryPointStream('test/dist')
-    var asset = s3.assetStream('test/dist')
-
-    s3.publish(entry, asset, 'test', true, true)
+    s3.publish(eStream, aStream, 'test', true, true)
       .pipe(debug())
       .pipe(es.writeArray((err, files) => {
           expect(err).not.to.exist;
