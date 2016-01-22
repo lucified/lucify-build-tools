@@ -62,7 +62,7 @@ describe("publish-stream", () => {
 
       }))
 
-    s3.publish('test', null, true, true, eStream, aStream)
+    s3.publish('test', null, null, true, true, eStream, aStream)
       .pipe(debug())
       .pipe(es.writeArray((err, files) => {
           expect(err).not.to.exist;
@@ -95,7 +95,7 @@ describe("cache", () => {
 
     function uploadAndTest(state, done) {
 
-        var combinedStream = s3.publish(bucket,'test/dist')
+        var combinedStream = s3.publish(bucket, 'test/dist')
 
         var files = []
         return combinedStream

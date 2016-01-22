@@ -121,7 +121,7 @@ function entryPointStream(sourceFolder) {
  */
 function assetStream(sourceFolder, maxAge) {
 
-  if (!isFinite(maxAge)) {
+  if (maxAge === null || !isFinite(maxAge)) {
     maxAge = 3600;
   }
 
@@ -151,10 +151,15 @@ module.exports = {
   entryPointStream,
   assetStream,
   publishToS3,
-  publish: (bucket, folder, simulate, force, entry_, asset_) => {
+  publish: (bucket, folder, maxAge, simulate, force, entry_, asset_) => {
       var entry = entry_ || entryPointStream(folder)
-      var asset = asset_ || assetStream(folder)
+      var asset = asset_ || assetStream(folder, maxAge)
       var output  = new require('stream').PassThrough({objectMode: true})
+
+    // It is important to do deploy in series to
+    // achieve an "atomic" update. uploading index.html
+    // before hashed assets would be bad -- JOJ
+
 
       asset.once('end', () => entry.pipe(output) )
       return asset
