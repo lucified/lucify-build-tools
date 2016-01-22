@@ -1,59 +1,47 @@
 
-var gulp = require('gulp');
-var parseArgs = require('minimist');
-
-var options = parseArgs(process.argv, {default: {
-    force: false, bucket: null, profile: null}});
-
-if (options.profile != null) {
-    console.log("Using AWS profile " + options.profile);
-    process.env['AWS_DEFAULT_PROFILE'] = options.profile;
-}
 
 var awspublish = require('gulp-awspublish');
 var mergeStream = require('merge-stream');
 var rename = require('gulp-rename');
 var rimraf = require('rimraf');
 var sprintf = require('sprintf');
+var vfs = require('vinyl-fs');
+var path = require('path')
+var through2 = require('through2').obj
 
+var entryPoints = [
+  '**/*.html',
+  '**/resize.js',
+  '**/embed.js',
+  '*.{png,ico}'
+]
 
 
 /*
  * Publish the given source files to AWS
  * with the given headers
  */
-function publishToS3(src, headers, folder, bucket) {
+function publishToS3(bucket, simulate, force) {
 
-  if (!folder) {
-    folder = "";
-  }
-
-  if (options.force) {
-     rimraf.sync('./.awspublish-*');
+  if (force) {
+    rimraf.sync('./.awspublish-*');
   }
 
   // Config object is passed to
   // new AWS.S3() as documented here:
   //   http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
 
-  if (options.bucket != null) {
-      bucket = options.bucket;
-  }
-
-
   var publisher = createPublisher(bucket);
+  var pStream = publisher.publish({}, {force: force, simulate: simulate === true ? true : false })
 
-  var publishStream = function(stream, headers) {
-    return stream
-      .pipe(rename(function(path) {
-        path.dirname += "";
-      }))
-      .pipe(publisher.publish(headers, {force: options.force, simulate: false}))
-      .pipe(publisher.cache())
-      .pipe(awspublish.reporter());
-  };
+  if(!force) {
+    pStream.pipe(publisher.cache())
+  }
+  pStream.pipe(awspublish.reporter())
+  // Attach the publisher here, since it provides access to the AWS JS client as well
+  pStream.publisher = publisher
+  return pStream
 
-  return publishStream(gulp.src(src), headers);
 }
 
 
@@ -77,40 +65,42 @@ function createPublisher(bucket) {
   return publisher;
 }
 
+//
+// https://github.com/jussi-kalliokoski/gulp-awspublish-router/blob/master/lib/utils/initFile.js
+//
+function s3Init (file) {
+    if ( file.s3 ) { return; }
+
+    file.s3 = {};
+    file.s3.headers = {};
+    file.s3.path = file.path.replace(file.base, "").replace(new RegExp("\\" + path.sep, "g"), "/");
+}
 
 /*
- * Publish all entry points assets
+ * Get file streams for all entry points assets
  * (assets without rev urls)
  */
-var epStream;
-function publishEntryPoints(bucket, sourceFolder, targetFolder) {
+function entryPointStream(sourceFolder) {
 
   if (!sourceFolder) {
     sourceFolder = 'dist';
   }
 
-  epStream = mergeStream(
-    publishToS3(['./' + sourceFolder + '/**/*.html'], {}, targetFolder, bucket),
-    publishToS3(['./' + sourceFolder + '/**/embed.js'], {}, targetFolder, bucket),
-    publishToS3(['./' + sourceFolder + '/**/resize.js'], {}, targetFolder, bucket),
-    publishToS3(['./' + sourceFolder + '/*.{png,ico}'], {}, targetFolder, bucket)
-  );
-  return epStream;
+  return vfs.src(entryPoints, {cwd: sourceFolder})
 }
 
 
 
 /*
- * Publish all hashed assets
+ * Get file streams for all hashed assets
  * (assets with rev urls)
  *
  * targetFolder -- folder to publish into
  * maxAge -- expiry age for header
  */
-var hashedStream;
-function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
+function assetStream(sourceFolder, maxAge) {
 
-  if (!isFinite(maxAge)) {
+  if (maxAge === null || !isFinite(maxAge)) {
     maxAge = 3600;
   }
 
@@ -123,27 +113,36 @@ function publishHashedAssets(bucket, sourceFolder, targetFolder, maxAge) {
   var headers = {
     'Cache-Control': sprintf('max-age=%d, public', maxAge)
   };
-  hashedStream = publishToS3([
-      './' + sourceFolder + '/**',            //
-      '!./' + sourceFolder + '/**/*.html',    // note that
-      '!./' + sourceFolder + '/**/embed.js',  // these
-      '!./' + sourceFolder + '/**/resize.js', // are
-      '!./' + sourceFolder + '/*.{png,ico}'], // exclusions
-       headers, targetFolder, bucket);
-  return hashedStream;
+
+  // Select everything BUT the entrypoints
+  var src = entryPoints.map(f => "!"+f)
+  src.unshift('**/*.*')
+
+  return vfs.src(src, {cwd: sourceFolder})
+    .pipe(through2((file, enc, cb) => {
+      s3Init(file)
+      Object.assign(file.s3.headers, headers)
+      cb(null, file)
+    }))
 }
 
+module.exports = {
+  entryPointStream,
+  assetStream,
+  publishToS3,
+  publish: (entry, asset, bucket, simulate, force) => {
+      var output  = new require('stream').PassThrough({objectMode: true})
 
-/*
- * Write publisher cache to speed up uploads
- */
-function writeCache() {
-  var publisher = createPublisher();
-  return mergeStream(epStream, hashedStream)
-    .pipe(publisher.cache());
+    // It is important to do deploy in series to
+    // achieve an "atomic" update. uploading index.html
+    // before hashed assets would be bad -- JOJ
+
+      //console.log('bucket', bucket, 'folder', folder, 'maxAge', maxAge, 'simulate', simulate, 'force', force, 'entry_', entry, 'asset_', asset_)
+      asset.once('end', () => entry.pipe(output) )
+      return asset
+        .pipe(output, {end: false})
+        .pipe(publishToS3(bucket, simulate, force))
+
+
+  }
 }
-
-
-module.exports.publishHashedAssets = publishHashedAssets;
-module.exports.publishEntryPoints = publishEntryPoints;
-module.exports.writeCache = writeCache;
