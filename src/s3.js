@@ -45,7 +45,7 @@ function publishToS3(bucket, simulate, force) {
   if (!force) {
     cache = first.pipe(publisher.cache())
   }
-  last = (cache || first).pipe(awspublish.reporter())
+  var last = (cache || first).pipe(awspublish.reporter())
   return [first, last]
 
 }
