@@ -1,5 +1,3 @@
-
-
 var awspublish = require('gulp-awspublish');
 var mergeStream = require('merge-stream');
 var rename = require('gulp-rename');
@@ -16,7 +14,6 @@ var entryPoints = [
   '*.{png,ico}'
 ]
 
-
 /*
  * Publish the given source files to AWS
  * with the given headers
@@ -32,18 +29,26 @@ function publishToS3(bucket, simulate, force) {
   //   http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
 
   var publisher = createPublisher(bucket);
-  var pStream = publisher.publish({}, {force: force, simulate: simulate === true ? true : false })
 
-  if(!force) {
-    pStream.pipe(publisher.cache())
+  console.log(`Publishing to ${bucket}`)
+
+  // We want to construct a pipeline that consists of multiple segments piped together.
+  // The consumer of this pipeline needs to be able to pipe into its first segment
+  // and to maybe continue it, i.e. to access its last segment. So we're returning
+  // an array with the first and last segments of this pipeline.
+
+  var first = publisher.publish({}, {
+    force: force,
+    simulate: simulate === true ? true : false
+  })
+  var cache = null
+  if (!force) {
+    cache = first.pipe(publisher.cache())
   }
-  pStream.pipe(awspublish.reporter())
-  // Attach the publisher here, since it provides access to the AWS JS client as well
-  pStream.publisher = publisher
-  return pStream
+  last = (cache || first).pipe(awspublish.reporter())
+  return [first, last]
 
 }
-
 
 /*
  * Create the AWS publisher
@@ -68,12 +73,14 @@ function createPublisher(bucket) {
 //
 // https://github.com/jussi-kalliokoski/gulp-awspublish-router/blob/master/lib/utils/initFile.js
 //
-function s3Init (file) {
-    if ( file.s3 ) { return; }
+function s3Init(file) {
+  if (file.s3) {
+    return;
+  }
 
-    file.s3 = {};
-    file.s3.headers = {};
-    file.s3.path = file.path.replace(file.base, "").replace(new RegExp("\\" + path.sep, "g"), "/");
+  file.s3 = {};
+  file.s3.headers = {};
+  file.s3.path = file.path.replace(file.base, "").replace(new RegExp("\\" + path.sep, "g"), "/");
 }
 
 /*
@@ -86,10 +93,10 @@ function entryPointStream(sourceFolder) {
     sourceFolder = 'dist';
   }
 
-  return vfs.src(entryPoints, {cwd: sourceFolder})
+  return vfs.src(entryPoints, {
+    cwd: sourceFolder
+  })
 }
-
-
 
 /*
  * Get file streams for all hashed assets
@@ -115,10 +122,12 @@ function assetStream(sourceFolder, maxAge) {
   };
 
   // Select everything BUT the entrypoints
-  var src = entryPoints.map(f => "!"+f)
+  var src = entryPoints.map(f => "!" + f)
   src.unshift('**/*.*')
 
-  return vfs.src(src, {cwd: sourceFolder})
+  return vfs.src(src, {
+      cwd: sourceFolder
+    })
     .pipe(through2((file, enc, cb) => {
       s3Init(file)
       Object.assign(file.s3.headers, headers)
@@ -131,18 +140,32 @@ module.exports = {
   assetStream,
   publishToS3,
   publish: (entry, asset, bucket, simulate, force) => {
-      var output  = new require('stream').PassThrough({objectMode: true})
+
+    // We want to construct a new stream that combines two others
+    // sequentially. We pipe to it the first one, passing the option end: false,
+    // listen for the 'end' event of the first stream and then pipe it the second one,
+    // not passing the end option.
+
+    var output = new require('stream').PassThrough({
+      objectMode: true
+    })
 
     // It is important to do deploy in series to
     // achieve an "atomic" update. uploading index.html
     // before hashed assets would be bad -- JOJ
 
-      //console.log('bucket', bucket, 'folder', folder, 'maxAge', maxAge, 'simulate', simulate, 'force', force, 'entry_', entry, 'asset_', asset_)
-      asset.once('end', () => entry.pipe(output) )
-      return asset
-        .pipe(output, {end: false})
-        .pipe(publishToS3(bucket, simulate, force))
+    //console.log('bucket', bucket, 'folder', folder, 'maxAge', maxAge, 'simulate', simulate, 'force', force, 'entry_', entry, 'asset_', asset_)
+    asset.once('end', () => entry.pipe(output))
 
+    var s3 = publishToS3(bucket, simulate, force) // we get the first and last segments of the pipeline
+
+    var stream = asset
+      .pipe(output, {
+        end: false
+      })
+      .pipe(s3[0])
+
+    return s3[1]
 
   }
 }
