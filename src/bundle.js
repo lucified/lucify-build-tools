@@ -88,6 +88,11 @@ var doBundle = function(bundler, buildContext, opts) {
 
     var stream = combined
       .on('error', handleErrors)
+      .on('error', function() {
+        if (!buildContext.dev) {
+          process.exit(1);
+        }
+      })
       .pipe(source(opts.outputFileName))
       .pipe(buffer())
       .pipe(gulpif(!buildContext.dev && buildContext.uglify, $.uglify()));
